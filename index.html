@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption & Decryption</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Secure Text Encryptor</h1>
+    </header>
+    <main>
+        <section class="container">
+            <div class="panel">
+                <h2>Encrypt</h2>
+                <textarea id="encryptInput" placeholder="Enter text to encrypt..."></textarea>
+                <input type="password" id="encryptKey" placeholder="Enter encryption key">
+                <button onclick="encryptText()">Encrypt</button>
+            </div>
+
+            <div class="panel">
+                <h2>Decrypt</h2>
+                <textarea id="decryptInput" placeholder="Enter text to decrypt..."></textarea>
+                <input type="password" id="decryptKey" placeholder="Enter decryption key">
+                <button onclick="decryptText()">Decrypt</button>
+            </div>
+
+            <div class="panel output">
+                <h2>Output</h2>
+                <textarea id="outputText" readonly placeholder="Your encrypted/decrypted text will appear here..."></textarea>
+                <button onclick="copyToClipboard()">Copy</button>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
