@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyodide AES Encryption</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.3/full/pyodide.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        input, button {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #444;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        h1, h2, h3 {
+            color: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pyodide AES Encryption/Decryption</h1>
+    <label for="operation">Choose operation (encrypt/decrypt): </label>
+    <input type="text" id="operation" value="encrypt" /><br><br>
+    <label for="text">Enter text: </label>
+    <input type="text" id="text" /><br><br>
+    <label for="key">Enter secret key: </label>
+    <input type="text" id="key" value="Please enter the value" /><br><br>
+    <button id="runBtn">Run</button><br><br>
+    <h2 id="result">Result: </h2>
+    <h3 id="executionTime">Execution Time: </h3>
+    <script type="module">
+        let pyodide;
+        async function loadPyodideOnce() {
+            if (!pyodide) {
+                pyodide = await loadPyodide({
+                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.3/full/"
+                });
+                console.log("Pyodide loaded successfully");
+            }
+        }
+        async function installPycryptodome() {
+            await pyodide.loadPackage("pycryptodome");
+            console.log("pycryptodome installed successfully");
+        }
+        async function runPython() {
+            try {
+                await loadPyodideOnce();
+                await installPycryptodome();
+                const pythonCode = `
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+import base64
+import hashlib
+SECRET_KEY = "yaashwin"
+def get_cipher(key=None):
+    if not key:
+        key = hashlib.sha256(SECRET_KEY.encode()).digest()[:16]
+    cipher = AES.new(key, AES.MODE_CBC)
+    return cipher, key
+
+def encrypt_text(plaintext):
+    cipher, key = get_cipher()
+    padded_data = pad(plaintext.encode(), AES.block_size)
+    encrypted_data = cipher.encrypt(padded_data)
+    encrypted_text = base64.b64encode(cipher.iv + encrypted_data).decode('utf-8')
+    return encrypted_text, key
+
+def decrypt_text(encrypted_text, key):
+    encrypted_data = base64.b64decode(encrypted_text)
+    iv = encrypted_data[:AES.block_size]
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypted_data = unpad(cipher.decrypt(encrypted_data[AES.block_size:]), AES.block_size)
+    return decrypted_data.decode('utf-8')
+
+def main(choice, text, key=None):
+    if choice == 'encrypt':
+        encrypted_text, key_used = encrypt_text(text)
+        return encrypted_text
+    elif choice == 'decrypt':
+        key_used = hashlib.sha256(key.encode()).digest()[:16]
+        decrypted_text = decrypt_text(text, key_used)
+        return decrypted_text
+    return "Invalid choice."
+`;
+                const startTime = performance.now();
+                pyodide.runPython(pythonCode);
+                const choice = document.getElementById("operation").value;
+                const text = document.getElementById("text").value;
+                const key = document.getElementById("key").value;
+                const sanitizedChoice = choice.replace(/(["'\\])/g, '\\$1');
+                const sanitizedText = text.replace(/(["'\\])/g, '\\$1');
+                const sanitizedKey = key.replace(/(["'\\])/g, '\\$1');
+                console.log(`Choice: ${sanitizedChoice}, Text: ${sanitizedText}, Key: ${sanitizedKey}`);
+                const result = pyodide.runPython(`
+                    main("${sanitizedChoice}", "${sanitizedText}", "${sanitizedKey}")
+                `);
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                console.log(`Python Output: ${result}`);
+                document.getElementById("result").innerText = `Result: ${result}`;
+                document.getElementById("executionTime").innerText = `Execution Time: ${executionTime.toFixed(2)} ms`;
+            } catch (error) {
+                console.error("Error running Python code:", error);
+                document.getElementById("result").innerText = `Error running Python code: ${error}`;
+            }
+        }
+        document.getElementById("runBtn").addEventListener("click", runPython);
+        window.onload = loadPyodideOnce;
+    </script>
+</body>
+</html>
